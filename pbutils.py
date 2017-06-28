@@ -5,7 +5,7 @@ import csv
 import json
 from constants import K
 from pprint import pprint
-from requests import post
+import requests
 from requests.auth import HTTPBasicAuth
 
 import logging
@@ -13,6 +13,7 @@ logger = logging.getLogger('utils')
 
 # FIXME:
 # 1. Make constants for PB.collector, precs, PB.inputfile
+# 2. Refactor into smaller libraries
 
 def configure_logging(log_file = "app.log", log_level = 1, append = False):
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
@@ -103,11 +104,15 @@ def _get_reclist_from_files(files):
     return reclist
 
 # reads the user/pass or token from the environment
-def load_credentials():
-    user = os.getenv('PB_TOKEN', os.getenv('PB_USER', ''))
+def load_credentials(allow_token = True):
+    user = os.getenv('PB_USER', '')
+    if allow_token:
+        user = os.getenv('PB_TOKEN', '')
     if not user:
-        logger.warn('You need to set PB_TOKEN or PB_USER in the environment')
+        logger.warn('You must set PB_TOKEN or (PB_USER, PB_PASSWD) in the environment')
     passwd = os.getenv('PB_PASSWD')
+    if not passwd and (not 'PB_TOKEN' in os.environ):
+        logger.warn('PB_USER requires PB_PASSWD to be set')
     return (user, passwd)
 
 def upload(paths, job_id=None, recurse=True):
@@ -120,10 +125,20 @@ def upload(paths, job_id=None, recurse=True):
         data['job_id'] = job_id
     # auth = HTTPBasicAuth(os.environ.get('PB_USER'), os.environ.get('PB_PASSWD'))
     logger.info('uploading {0} records to: {1}'.format(len(reclist),  K.url.api.post.perfdata))
-    r = post(K.url.api.post.perfdata, json=data, auth=load_credentials())
+    r = requests.post(K.url.api.post.perfdata, json=data, auth=load_credentials())
     if (r.status_code < 400):
         logger.info(('upload success: {0}').format(r.status_code))
         logger.debug(r.json())
     else:
         logger.info(('upload failed: {0}').format(r.json()))
     # pprint(reclist)
+
+def get_token():
+    token = ''
+    r = requests.get(K.url.api.userinfo, auth=load_credentials(allow_token=False))
+    if (r.status_code < 400):
+        token = r.json().get('token', '')
+        logger.info(('token: {0}').format(r.json()['token']))
+    else:
+        logger.error(r.json())
+    return token
