@@ -28,7 +28,7 @@ def configure_logging(log_file = "app.log", log_level = 1, append = False):
     return
 
 
-def _get_files_list_to_upload(paths, recurse, verbose):
+def _get_files_list(paths, recurse):
     files = []
     for p in paths:
         if os.path.isdir(p):
@@ -102,17 +102,28 @@ def _get_reclist_from_files(files):
         reclist += recs
     return reclist
 
+# reads the user/pass or token from the environment
+def load_credentials():
+    user = os.getenv('PB_TOKEN', os.getenv('PB_USER', ''))
+    if not user:
+        logger.warn('You need to set PB_TOKEN or PB_USER in the environment')
+    passwd = os.getenv('PB_PASSWD')
+    return (user, passwd)
 
-def upload(paths, recurse, verbose):
+def upload(paths, job_id=None, recurse=True):
     paths = [os.path.abspath(p) for p in paths]
-    files = _get_files_list_to_upload(paths, recurse, verbose)
+    files = _get_files_list(paths, recurse)
     reclist = _get_reclist_from_files(files)
-    logger.info('Uploading {0} records to: {1}'.format(len(reclist),  K.url.api.post.perfdata))
-    data = {'precs': reclist, 'job_name': 'NAMD'}
+    data = {'precs': reclist}
+    if job_id:
+        logger.debug('using existing job ID: ' + job_id)
+        data['job_id'] = job_id
     # auth = HTTPBasicAuth(os.environ.get('PB_USER'), os.environ.get('PB_PASSWD'))
-    r = post(K.url.api.post.perfdata, json=data, auth=('tusharmohan@gmail.com','anandlok'))
-    logger.debug(r.json())
+    logger.info('uploading {0} records to: {1}'.format(len(reclist),  K.url.api.post.perfdata))
+    r = post(K.url.api.post.perfdata, json=data, auth=load_credentials())
+    if (r.status_code < 400):
+        logger.info(('upload success: {0}').format(r.status_code))
+        logger.debug(r.json())
+    else:
+        logger.info(('upload failed: {0}').format(r.json()))
     # pprint(reclist)
-
-
-configure_logging('pbutils.log', 3, False)
