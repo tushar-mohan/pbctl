@@ -31,8 +31,10 @@ def parse_args():
 
     if 'help' in args.arguments:
         args.arguments = ['-h' if x == 'help' else x for x in args.arguments ]
-    for c in range(args.verbose):
-        args.arguments.append('-v')
+
+    if args.command and (args.command in EXE_MAP):
+        for c in range(args.verbose):
+            args.arguments.insert(0, '-v')
 
     args.arguments = " ".join(args.arguments)
 
