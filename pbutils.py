@@ -7,7 +7,6 @@ from getpass import getpass
 from constants import K
 from pprint import pprint
 import requests
-from requests.auth import HTTPBasicAuth
 
 import logging
 logger = logging.getLogger('utils')
@@ -16,7 +15,7 @@ logger = logging.getLogger('utils')
 # 1. Make constants for PB.collector, precs, PB.inputfile
 # 2. Refactor into smaller libraries
 
-def configure_logging(log_file = "app.log", verbose = 0, append = False):
+def configure_logging(log_file = "perfbrowser.log", verbose = 0, append = False):
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
     lvl = min(len(levels)-1, verbose+2)
     if log_file:
@@ -136,25 +135,26 @@ def load_credentials(allow_token = True, quiet = False):
 def login():
     if (load_credentials(quiet = True)):
         return
-    user = raw_input("Username or e-mail: ")
-    passwd = getpass("Password: ")
-    if user and passwd:
-        token = get_token(user, passwd)
-        if token:
-            try:
-                if not os.path.exists(K.path.settings):
-                    os.mkdir(K.path.settings)
-                oldmask = os.umask(077)
-                with open(K.path.token, 'w') as f:
-                    f.write(token)
-                os.umask(oldmask)
-                logger.info('saved auth token for future use')
-            except Exception as e:
-                logger.error("Could not save auth token: {0}".format(e))
-        else:
-            logger.warn("Could not retrieve auth token")
+    user = ''
+    while not user:
+        user = raw_input("Username or e-mail: ")
+    passwd = ''
+    while not passwd:
+        passwd = getpass("Password: ")
+    token = get_token(user, passwd)
+    if token:
+        try:
+            if not os.path.exists(K.path.settings):
+                os.mkdir(K.path.settings)
+            oldmask = os.umask(077)
+            with open(K.path.token, 'w') as f:
+                f.write(token)
+            os.umask(oldmask)
+            logger.info('saved auth token for future use')
+        except Exception as e:
+            logger.error("Could not save auth token: {0}".format(e))
     else:
-        input_credentials()
+        logger.warn("Could not retrieve auth token")
 
 def logout():
     try:
@@ -184,6 +184,25 @@ def upload(paths, job_id=None, recurse=True):
         logger.info(('upload failed: {0}').format(r.json()))
     # pprint(reclist)
 
+def jobs_list():
+    r = requests.get(K.url.api.jobs, auth=load_credentials())
+    jsn = r.json()
+    if (r.status_code < 400):
+        logger.debug(jsn)
+    else:
+        logger.error(jsn)
+    return jsn
+
+def browse_job(job_id):
+    r = requests.get(K.url.api.perfdata(job_id), auth=load_credentials())
+    jsn = r.json()
+    if (r.status_code < 400):
+        logger.debug(jsn)
+    else:
+        logger.error(jsn)
+    return jsn
+
+
 def get_token(user, passwd):
     token = ''
     r = requests.get(K.url.api.userinfo, auth=(user, passwd))
@@ -193,3 +212,5 @@ def get_token(user, passwd):
     else:
         logger.error(r.json())
     return token
+
+login()
