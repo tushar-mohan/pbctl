@@ -26,7 +26,7 @@ if __name__ == "__main__":
         print pb.version()
         sys.exit(0)
 
-    pbutils.configure_logging('pbutils.log', args.verbose+2, False)
+    pbutils.configure_logging('pbutils.log', args.verbose, False)
     for p in args.upload:
         if not(os.path.exists(p)):
             logger.error("{path} does not exist".format(path=p))

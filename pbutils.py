@@ -3,6 +3,7 @@ import sys
 import glob
 import csv
 import json
+from getpass import getpass
 from constants import K
 from pprint import pprint
 import requests
@@ -15,9 +16,9 @@ logger = logging.getLogger('utils')
 # 1. Make constants for PB.collector, precs, PB.inputfile
 # 2. Refactor into smaller libraries
 
-def configure_logging(log_file = "app.log", log_level = 1, append = False):
+def configure_logging(log_file = "app.log", verbose = 0, append = False):
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]
-    lvl = min(len(levels)-1, log_level)
+    lvl = min(len(levels)-1, verbose+2)
     if log_file:
         logging.basicConfig(filename=log_file, filemode='a' if append else 'w', level=levels[lvl], format="%(asctime)s %(levelname)s %(name)s %(message)s", datefmt='%m/%d/%Y %H:%M:%S')
     stderrLogger = logging.StreamHandler()
@@ -104,16 +105,63 @@ def _get_reclist_from_files(files):
     return reclist
 
 # reads the user/pass or token from the environment
-def load_credentials(allow_token = True):
-    user = os.getenv('PB_USER', '')
+def load_credentials(allow_token = True, quiet = False):
     if allow_token:
-        user = os.getenv('PB_TOKEN', '')
-    if not user:
+        token = os.getenv('PB_TOKEN', '')
+        if (token):
+            logger.debug("read auth token from environment")
+            return (token,'')
+        else:
+            try:
+                with open(K.path.token) as f:
+                    token = f.read()
+                if (token):
+                    logger.debug("read auth token from file-system")
+                    return (token, '')
+            except:
+                logger.debug("could not find auth token on file-system")
+        logger.debug("no auth token found. Trying user/pass auth")
+    user = os.getenv('PB_USER', '')
+    if not quiet and (not user):
         logger.warn('You must set PB_TOKEN or (PB_USER, PB_PASSWD) in the environment')
+    if not user:
+        return None
     passwd = os.getenv('PB_PASSWD')
-    if not passwd and (not 'PB_TOKEN' in os.environ):
+    if not quiet and (not passwd):
         logger.warn('PB_USER requires PB_PASSWD to be set')
+    if not passwd:
+        return None
     return (user, passwd)
+
+def login():
+    if (load_credentials(quiet = True)):
+        return
+    user = raw_input("Username or e-mail: ")
+    passwd = getpass("Password: ")
+    if user and passwd:
+        token = get_token(user, passwd)
+        if token:
+            try:
+                if not os.path.exists(K.path.settings):
+                    os.mkdir(K.path.settings)
+                oldmask = os.umask(077)
+                with open(K.path.token, 'w') as f:
+                    f.write(token)
+                os.umask(oldmask)
+                logger.info('saved auth token for future use')
+            except Exception as e:
+                logger.error("Could not save auth token: {0}".format(e))
+        else:
+            logger.warn("Could not retrieve auth token")
+    else:
+        input_credentials()
+
+def logout():
+    try:
+        os.unlink(K.path.token)
+        logger.debug("successfully logged out and removed all auth info")
+    except:
+        pass
 
 def upload(paths, job_id=None, recurse=True):
     paths = [os.path.abspath(p) for p in paths]
@@ -128,17 +176,20 @@ def upload(paths, job_id=None, recurse=True):
     r = requests.post(K.url.api.post.perfdata, json=data, auth=load_credentials())
     if (r.status_code < 400):
         logger.info(('upload success: {0}').format(r.status_code))
-        logger.debug(r.json())
+        d = r.json()
+        if not job_id:
+            logger.info('Job name: {0}, JobId: {1}'.format(d['name'], d['id']))
+        logger.debug(d)
     else:
         logger.info(('upload failed: {0}').format(r.json()))
     # pprint(reclist)
 
-def get_token():
+def get_token(user, passwd):
     token = ''
-    r = requests.get(K.url.api.userinfo, auth=load_credentials(allow_token=False))
+    r = requests.get(K.url.api.userinfo, auth=(user, passwd))
     if (r.status_code < 400):
         token = r.json().get('token', '')
-        logger.info(('token: {0}').format(r.json()['token']))
+        logger.debug("Successfully acquired token for login")
     else:
         logger.error(r.json())
     return token
