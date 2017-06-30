@@ -6,7 +6,7 @@ import argparse
 from subprocess import call
 from dotmap import DotMap
 from pbutils import login, logout, configure_logging, jobs_list, browse_job
-from pprint import pprint
+
 
 def usage():
     return '''
@@ -15,14 +15,15 @@ pb is a command-line interface to PerfBrowser
 
 
 EXE_MAP = DotMap({
-    'import' : {'exe' : 'pb-upload.py', 'args':''},
+    'import' : {'exe' : 'pb-import.py', 'args':''},
+    'data' : {'exe' : 'pb-data.py', 'args':''}
 })
 
 def parse_args():
     p = argparse.ArgumentParser(description=usage(),
                                 formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument('-v', '--verbose', action='count', default=0, help='Increase logging level. Can be used multiple times')
-    p.add_argument('command', choices = ['help', 'import', 'login', 'logout', 'browse', 'version'],
+    p.add_argument('command', choices = ['help', 'import', 'login', 'logout', 'data', 'version'],
                    help = 'perfbrowser command to execute (required)')
     p.add_argument('arguments', nargs=argparse.REMAINDER, default = None,
                    help='any arguments to pass to command (optional)')
@@ -70,10 +71,4 @@ if __name__ == "__main__":
             login()
         elif args.command == 'logout':
             logout()
-        elif args.command == 'browse':
-            if not args.arguments:
-                pprint(jobs_list()['jobs'])
-            else:
-                job_id = int(args.arguments)
-                pprint(browse_job(job_id)['perfdata'])
     sys.exit(0)

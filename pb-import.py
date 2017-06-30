@@ -4,7 +4,7 @@ import argparse
 import pbutils
 import logging
 
-logger = logging.getLogger('pb-upload')
+logger = logging.getLogger('pb-import')
 
 def parse_args():
     parser = argparse.ArgumentParser(description = 'Uploads perfbrowser data from one or more files or directores')

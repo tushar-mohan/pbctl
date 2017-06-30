@@ -104,7 +104,7 @@ def _get_reclist_from_files(files):
     return reclist
 
 # reads the user/pass or token from the environment
-def load_credentials(allow_token = True, quiet = False):
+def _load_credentials(allow_token = True, quiet = False):
     if allow_token:
         token = os.getenv('PB_TOKEN', '')
         if (token):
@@ -133,7 +133,7 @@ def load_credentials(allow_token = True, quiet = False):
     return (user, passwd)
 
 def login():
-    if (load_credentials(quiet = True)):
+    if (_load_credentials(quiet = True)):
         return
     user = ''
     while not user:
@@ -173,7 +173,7 @@ def upload(paths, job_id=None, recurse=True):
         data['job_id'] = job_id
     # auth = HTTPBasicAuth(os.environ.get('PB_USER'), os.environ.get('PB_PASSWD'))
     logger.info('uploading {0} records to: {1}'.format(len(reclist),  K.url.api.post.perfdata))
-    r = requests.post(K.url.api.post.perfdata, json=data, auth=load_credentials())
+    r = requests.post(K.url.api.post.perfdata, json=data, auth=_load_credentials())
     if (r.status_code < 400):
         logger.info(('upload success: {0}').format(r.status_code))
         d = r.json()
@@ -185,16 +185,20 @@ def upload(paths, job_id=None, recurse=True):
     # pprint(reclist)
 
 def jobs_list():
-    r = requests.get(K.url.api.jobs, auth=load_credentials())
+    url = K.url.api.jobs
+    logger.debug('GET {0}'.format(url))
+    r = requests.get(url, auth=_load_credentials())
     jsn = r.json()
     if (r.status_code < 400):
-        logger.debug(jsn)
+        logger.debug('jobs listing retrieved')
     else:
         logger.error(jsn)
     return jsn
 
 def browse_job(job_id):
-    r = requests.get(K.url.api.perfdata(job_id), auth=load_credentials())
+    url = K.url.api.perfdata(job_id)
+    logger.debug('GET {0}'.format(url))
+    r = requests.get(url, auth=_load_credentials())
     jsn = r.json()
     if (r.status_code < 400):
         logger.debug(jsn)
@@ -202,6 +206,15 @@ def browse_job(job_id):
         logger.error(jsn)
     return jsn
 
+def delete_job(job_id):
+    url = K.url.api.job.delete(job_id)
+    logger.debug('DELETE {0}'.format(url))
+    r = requests.delete(url, auth=_load_credentials())
+    if (r.status_code < 400):
+        logger.info('deleted jobId {0}'.format(job_id))
+    else:
+        logger.error('could not delete job: {0}'.format(r.json()))
+    return
 
 def get_token(user, passwd):
     token = ''
