@@ -16,14 +16,14 @@ pb is a command-line interface to PerfBrowser
 
 EXE_MAP = DotMap({
     'import' : {'exe' : 'pb-import.py', 'args':''},
-    'data' : {'exe' : 'pb-data.py', 'args':''}
+    'rest' : {'exe' : 'pb-rest.py', 'args':''}
 })
 
 def parse_args():
     p = argparse.ArgumentParser(description=usage(),
                                 formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument('-v', '--verbose', action='count', default=0, help='Increase logging level. Can be used multiple times')
-    p.add_argument('command', choices = ['help', 'import', 'login', 'logout', 'data', 'version'],
+    p.add_argument('command', choices = ['help', 'import', 'login', 'logout', 'rest', 'version'],
                    help = 'perfbrowser command to execute (required)')
     p.add_argument('arguments', nargs=argparse.REMAINDER, default = None,
                    help='any arguments to pass to command (optional)')

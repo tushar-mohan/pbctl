@@ -8,7 +8,7 @@ from pprint import pprint
 logger = logging.getLogger('pb-data')
 
 def parse_args():
-    parser = argparse.ArgumentParser(description = 'Browse and modify the datastore')
+    parser = argparse.ArgumentParser(description = 'REST client to browse and modify the PerfBrowser database')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Increase logging level. Can be used multiple times')
     parser.add_argument('-l', '--list', action='store_true', help="List all jobs owned by user")
     parser.add_argument('-s', '--show', metavar='JOB_ID', action='store', help="Dump data for the specified job")

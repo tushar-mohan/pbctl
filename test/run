@@ -1,0 +1,13 @@
+#!/bin/bash -e
+
+td=$(dirname $0)
+
+if [ "$1" == "" ] || [ "$1" == "full" ] ; then
+    echo; echo "Ensuring all components installed" && $td/bats/bin/bats  "$td/000_components_installed.bats"
+else
+    echo; echo "Running $1" && $td/bats/bin/bats "$1"
+fi
+
+if [[ "$1" == "full" ]] || [[ "$FULLTEST" == "1" ]]; then
+    echo "No more tests"
+fi
