@@ -6,6 +6,7 @@ PB_TEST_DIR="$td"; export PB_TEST_DIR
 if [ "$1" == "" ] || [ "$1" == "full" ] ; then
     echo; echo "Ensuring all components installed" && $td/bats/bin/bats  "$td/000_components_installed.bats"
     echo; echo "Testing data import" && $td/bats/bin/bats  "$td/010_import.bats"
+    echo; echo "REST api" && $td/bats/bin/bats  "$td/020_rest.bats"
 else
     echo; echo "Running $1" && $td/bats/bin/bats "$1"
 fi
