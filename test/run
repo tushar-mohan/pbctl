@@ -1,9 +1,11 @@
 #!/bin/bash -e
 
 td=$(dirname $0)
+PB_TEST_DIR="$td"; export PB_TEST_DIR
 
 if [ "$1" == "" ] || [ "$1" == "full" ] ; then
     echo; echo "Ensuring all components installed" && $td/bats/bin/bats  "$td/000_components_installed.bats"
+    echo; echo "Testing data import" && $td/bats/bin/bats  "$td/010_import.bats"
 else
     echo; echo "Running $1" && $td/bats/bin/bats "$1"
 fi

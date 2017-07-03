@@ -5,7 +5,7 @@ from pbutils import configure_logging, jobs_list, browse_job, delete_job
 import logging
 from pprint import pprint
 
-logger = logging.getLogger('pb-data')
+logger = logging.getLogger('rest')
 
 def parse_args():
     parser = argparse.ArgumentParser(description = 'REST client to browse and modify the PerfBrowser database')

@@ -13,17 +13,19 @@ def usage():
 pb is a command-line interface to PerfBrowser
 '''
 
+base_dir=os.path.dirname(os.path.abspath(__file__))
 
 EXE_MAP = DotMap({
     'import' : {'exe' : 'pb-import.py', 'args':''},
-    'rest' : {'exe' : 'pb-rest.py', 'args':''}
+    'rest' : {'exe' : 'pb-rest.py', 'args':''},
+    'test' : {'exe' : '{0}/test/run'.format(base_dir), 'args':''}
 })
 
 def parse_args():
     p = argparse.ArgumentParser(description=usage(),
                                 formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument('-v', '--verbose', action='count', default=0, help='Increase logging level. Can be used multiple times')
-    p.add_argument('command', choices = ['help', 'import', 'login', 'logout', 'rest', 'version'],
+    p.add_argument('command', choices = ['help', 'import', 'login', 'logout', 'rest', 'test', 'version'],
                    help = 'perfbrowser command to execute (required)')
     p.add_argument('arguments', nargs=argparse.REMAINDER, default = None,
                    help='any arguments to pass to command (optional)')
@@ -57,7 +59,7 @@ if __name__ == "__main__":
     #     sys.exit(0)
 
     if args.command in EXE_MAP:
-        os.environ['PATH'] = "{0}:{1}".format(os.path.dirname(os.path.abspath(__file__)), os.environ['PATH'])
+        os.environ['PATH'] = "{0}:{1}".format(base_dir, os.environ['PATH'])
         c = EXE_MAP[args.command]
         cmd = "{exe} {default_args} {args}".format(exe=c.exe, default_args = c.args, args=args.arguments)
 

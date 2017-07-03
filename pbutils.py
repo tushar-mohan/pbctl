@@ -175,7 +175,7 @@ def upload(paths, job_id=None, recurse=True):
     logger.info('uploading {0} records to: {1}'.format(len(reclist),  K.url.api.post.perfdata))
     r = requests.post(K.url.api.post.perfdata, json=data, auth=_load_credentials())
     if (r.status_code < 400):
-        logger.info(('upload success: {0}').format(r.status_code))
+        logger.info(('upload succeeded: return code({0})').format(r.status_code))
         d = r.json()
         if not job_id:
             logger.info('Job name: {0}, JobId: {1}'.format(d['name'], d['id']))
