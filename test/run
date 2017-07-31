@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 td=$(dirname $0)
-PB_TEST_DIR="readlink -f $td"; export PB_TEST_DIR
+PB_TEST_DIR=$(readlink -f "$td"); export PB_TEST_DIR
 
 # prepend top-level dir to PATH
 pd=$(readlink -f "$PB_TEST_DIR")
