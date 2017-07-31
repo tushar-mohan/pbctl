@@ -11,9 +11,15 @@ import requests
 import logging
 logger = logging.getLogger('utils')
 
+VERSION = "0.1.0"
+
 # FIXME:
 # 1. Make constants for PB.collector, precs, PB.inputfile
 # 2. Refactor into smaller libraries
+
+
+def pb_version():
+    return VERSION
 
 def configure_logging(log_file = "perfbrowser.log", verbose = 0, append = False):
     levels = [logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG]

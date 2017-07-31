@@ -1,7 +1,6 @@
 #!/usr/bin/env python2.7
 import sys, os
 import argparse
-from pbutils import configure_logging, jobs_list, browse_job, delete_job
 import logging
 import json
 from pprint import pprint
@@ -21,6 +20,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    from pbutils import configure_logging, jobs_list, browse_job, delete_job
 
     configure_logging(verbose=args.verbose)
 

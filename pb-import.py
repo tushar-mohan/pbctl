@@ -1,10 +1,7 @@
 #!/usr/bin/env python2.7
 import sys, os
 import argparse
-import pbutils
-import logging
 
-logger = logging.getLogger('import')
 
 def parse_args():
     parser = argparse.ArgumentParser(description = 'Uploads perfbrowser data from one or more files or directores')
@@ -22,11 +19,15 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
+    import logging
+    from pbutils import pb_version, configure_logging, upload
     if args.version:
-        print pb.version()
+        print pb_version()
         sys.exit(0)
 
-    pbutils.configure_logging('pbutils.log', args.verbose, False)
+    logger = logging.getLogger('import')
+    configure_logging(verbose=args.verbose)
+
     for p in args.upload:
         if not(os.path.exists(p)):
             logger.error("{path} does not exist".format(path=p))
@@ -36,5 +37,5 @@ if __name__ == "__main__":
         # use the current directory if none specified
         args.upload.append('.')
 
-    rc =  pbutils.upload(args.upload, args.job_id, args.recurse)
+    rc =  upload(args.upload, args.job_id, args.recurse)
     sys.exit(rc)
