@@ -5,7 +5,6 @@ import stat
 import argparse
 from subprocess import call
 from dotmap import DotMap
-from pbutils import login, logout, configure_logging, jobs_list, browse_job
 
 
 def usage():
@@ -68,6 +67,7 @@ if __name__ == "__main__":
         rc = call(cmd, shell=True)
         sys.exit(rc)
     else:
+        from pbutils import login, logout, configure_logging
         configure_logging(verbose=args.verbose)
         if args.command == 'login':
             login()
