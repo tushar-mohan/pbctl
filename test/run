@@ -4,7 +4,7 @@ td=$(dirname $0)
 PB_TEST_DIR=$(readlink -f "$td"); export PB_TEST_DIR
 
 # prepend top-level dir to PATH
-pd=$(readlink -f "$PB_TEST_DIR")
+pd=$(readlink -f "$PB_TEST_DIR/..")
 export PATH="$pd:$PATH"
 echo "prepended $pd to PATH"
 
