@@ -1,11 +1,12 @@
 #!/bin/bash -e
 
 td=$(dirname $0)
-PB_TEST_DIR="$td"; export PB_TEST_DIR
+PB_TEST_DIR="readlink -f $td"; export PB_TEST_DIR
 
 # prepend top-level dir to PATH
-export PATH="$PB_TEST_DIR/..:$PATH"
-echo "prepended $PB_TEST_DIR/.. to PATH"
+pd=$(readlink -f "$PB_TEST_DIR")
+export PATH="$pd:$PATH"
+echo "prepended $pd to PATH"
 
 if [ "$1" == "" ] || [ "$1" == "full" ] ; then
     echo; echo "Ensuring all components installed" && $td/bats/bin/bats  "$td/000_components_installed.bats"
