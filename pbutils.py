@@ -109,6 +109,13 @@ def _get_reclist_from_files(files):
         reclist += recs
     return reclist
 
+def _is_token(auth):
+    if not auth: return False
+    if auth[-1]: return False
+    if len(auth[0]) < 128: return False
+    if '@' in auth[0]: return False
+    return True
+
 # reads the user/pass or token from the environment
 def _load_credentials(allow_token = True, quiet = False):
     if allow_token:
@@ -138,27 +145,46 @@ def _load_credentials(allow_token = True, quiet = False):
         return None
     return (user, passwd)
 
+def verify_auth(auth):
+    r = requests.get(K.url.api.verify_auth, auth=auth)
+    if (r.status_code < 400):
+        logger.debug("Successfully verified auth credentials")
+    else:
+        logger.error(r.json())
+    return (r.status_code < 400)
 
-def login(verify = False):
-    auth = _load_credentials(quiet = not(verify))
-    if (auth and not verify):
-        return True
+def login(verify = False, save_token = True, allow_token = True):
+    auth = _load_credentials(quiet = True, allow_token = allow_token)
+    if (_is_token(auth)):
+        if not verify: 
+            return True
+        else:
+            logger.debug('verifying auth token..')
+            rc = verify_auth((auth[0], ''))
+            if not rc:
+                return login(verify=True, save_token=True, allow_token=False)
+            else:
+                logger.info("Login successful (token verified)")
+                return True
+
     user = auth[0] if auth else ''
     while not user:
         user = raw_input("Username or e-mail: ")
     passwd = auth[-1] if auth else ''
-    while not passwd and not auth:
+    while not passwd:
         passwd = getpass("Password: ")
     token = get_token(user, passwd)
     if token:
+        logger.info('Login successful')
         try:
-            if not os.path.exists(K.path.settings):
-                os.mkdir(K.path.settings)
-            oldmask = os.umask(077)
-            with open(K.path.token, 'w') as f:
-                f.write(token)
-            os.umask(oldmask)
-            logger.info('saved auth token for future use')
+            if save_token:
+                if not os.path.exists(K.path.settings):
+                    os.mkdir(K.path.settings)
+                oldmask = os.umask(077)
+                with open(K.path.token, 'w') as f:
+                    f.write(token)
+                os.umask(oldmask)
+                logger.debug('saved token for future use')
             return True
         except Exception as e:
             logger.error("Could not save auth token: {0}".format(e))
