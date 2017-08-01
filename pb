@@ -62,7 +62,7 @@ if __name__ == "__main__":
         from pbutils import login, logout, configure_logging
         configure_logging(verbose=args.verbose)
         if args.command == 'login':
-            rc = 0 if login(args.arguments) else 1
+            rc = 0 if login(verify = True) else 1
         elif args.command == 'logout':
             logout()
     sys.exit(rc)

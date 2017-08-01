@@ -138,17 +138,16 @@ def _load_credentials(allow_token = True, quiet = False):
         return None
     return (user, passwd)
 
-def login(arg = ''):
-    batch = True if 'batch' in arg else False
-    if (_load_credentials(quiet = not(batch))):
+
+def login(verify = False):
+    auth = _load_credentials(quiet = not(verify))
+    if (auth and not verify):
         return True
-    if batch: 
-        return False
-    user = ''
+    user = auth[0] if auth else ''
     while not user:
         user = raw_input("Username or e-mail: ")
-    passwd = ''
-    while not passwd:
+    passwd = auth[-1] if auth else ''
+    while not passwd and not auth:
         passwd = getpass("Password: ")
     token = get_token(user, passwd)
     if token:

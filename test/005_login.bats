@@ -2,6 +2,5 @@
 
 
 @test "can we login?" {
-    run pb login --batch
-    [ $status -eq 0 ]
+    pb login --verify
 }
