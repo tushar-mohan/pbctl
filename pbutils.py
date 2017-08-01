@@ -138,9 +138,12 @@ def _load_credentials(allow_token = True, quiet = False):
         return None
     return (user, passwd)
 
-def login():
-    if (_load_credentials(quiet = True)):
-        return
+def login(arg = ''):
+    batch = True if 'batch' in arg else False
+    if (_load_credentials(quiet = not(batch))):
+        return True
+    if batch: 
+        return False
     user = ''
     while not user:
         user = raw_input("Username or e-mail: ")
@@ -157,10 +160,12 @@ def login():
                 f.write(token)
             os.umask(oldmask)
             logger.info('saved auth token for future use')
+            return True
         except Exception as e:
             logger.error("Could not save auth token: {0}".format(e))
     else:
         logger.warn("Could not retrieve auth token")
+    return False
 
 def logout():
     try:
@@ -170,6 +175,7 @@ def logout():
         pass
 
 def upload(paths, job_id=None, recurse=True):
+    login()
     paths = [os.path.abspath(p) for p in paths]
     files = _get_files_list(paths, recurse)
     reclist = _get_reclist_from_files(files)
@@ -191,6 +197,7 @@ def upload(paths, job_id=None, recurse=True):
     # pprint(reclist)
 
 def jobs_list():
+    login()
     url = K.url.api.jobs
     logger.debug('GET {0}'.format(url))
     r = requests.get(url, auth=_load_credentials())
@@ -202,6 +209,7 @@ def jobs_list():
     return jsn
 
 def browse_job(job_id):
+    login()
     url = K.url.api.perfdata(job_id)
     logger.debug('GET {0}'.format(url))
     r = requests.get(url, auth=_load_credentials())
@@ -213,6 +221,7 @@ def browse_job(job_id):
     return jsn
 
 def delete_job(job_id):
+    login()
     url = K.url.api.job.delete(job_id)
     logger.debug('DELETE {0}'.format(url))
     r = requests.delete(url, auth=_load_credentials())
@@ -232,4 +241,4 @@ def get_token(user, passwd):
         logger.error(r.json())
     return token
 
-login()
+#login()

@@ -1,15 +1,16 @@
 #!/bin/bash -e
 
 td=$(dirname $0)
-PB_TEST_DIR=$(readlink -f "$td"); export PB_TEST_DIR
+
+PB_TEST_DIR="$td"; export PB_TEST_DIR
 
 # prepend top-level dir to PATH
-pd=$(readlink -f "$PB_TEST_DIR/..")
-export PATH="$pd:$PATH"
-echo "prepended $pd to PATH"
+pd="$PB_TEST_DIR/.."; export PATH="$pd:$PATH"
+#echo "prepended $pd to PATH"
 
 if [ "$1" == "" ] || [ "$1" == "full" ] ; then
     echo; echo "Ensuring all components installed" && $td/bats/bin/bats  "$td/000_components_installed.bats"
+    echo; echo "Testing login" && $td/bats/bin/bats  "$td/005_login.bats"
     echo; echo "Testing data import" && $td/bats/bin/bats  "$td/010_import.bats"
     echo; echo "REST api" && $td/bats/bin/bats  "$td/020_rest.bats"
 else

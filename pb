@@ -48,15 +48,8 @@ def parse_args():
 if __name__ == "__main__":
 
     args = parse_args()
-    # if (args.command == 'version'):
-    #     try:
-    #         version_f = open(os.path.dirname(os.path.abspath(__file__)) + "/../.version")
-    #     except IOError:
-    #         print "version unknown"
-    #     else:
-    #         print "perfminer ({0})".format(version_f.read().strip())
-    #     sys.exit(0)
 
+    rc = 0
     if args.command in EXE_MAP:
         os.environ['PATH'] = "{0}:{1}".format(base_dir, os.environ['PATH'])
         c = EXE_MAP[args.command]
@@ -65,12 +58,11 @@ if __name__ == "__main__":
         cmd = cmd.rstrip() # remove trailing
         cmd = ' '.join(cmd.split()) # remove duplicates
         rc = call(cmd, shell=True)
-        sys.exit(rc)
     else:
         from pbutils import login, logout, configure_logging
         configure_logging(verbose=args.verbose)
         if args.command == 'login':
-            login()
+            rc = 0 if login(args.arguments) else 1
         elif args.command == 'logout':
             logout()
-    sys.exit(0)
+    sys.exit(rc)
