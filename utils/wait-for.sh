@@ -31,6 +31,7 @@ wait_for() {
       fi
       exit 0
     fi
+    echo "Waiting for $HOST:$PORT service to be up -- sleeping 1 sec"
     sleep 1
   done
   echo "Operation timed out" >&2
