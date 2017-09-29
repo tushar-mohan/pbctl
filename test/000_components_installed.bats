@@ -1,12 +1,10 @@
 @test "perfbrowser driver" {
-  pb -h
+  pfb -h
 }
 
-@test "REST client" {
-  pb rest -h
+@test "dependencies" {
+  which bash
+  which curl
+  which wc
+  which col
 }
-
-@test "data importer" {
-  pb import -h
-}
-

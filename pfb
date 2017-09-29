@@ -1,0 +1,199 @@
+#!/bin/bash
+
+# Exit codes
+# 2 : Invalid credentials
+# 3 : Error deleting job
+# 4 : Error retrieving job
+
+API_BASE_URL=${PB_APIBASE_URL:-"https://perfbrowser.perftools.org/api/1.0"}
+USERINFO_URL="${API_BASE_URL}/userinfo/"
+JOBSLIST_URL="${API_BASE_URL}/jobs/"
+POST_PERFDATA_URL="${API_BASE_URL}/perfdata/"
+VERIFY_AUTH_URL="${API_BASE_URL}/verify_auth/"
+CONFIG_DIR="${HOME}/.perfbrowser"
+TOKEN_PATH="${CONFIG_DIR}/.authtoken"
+VERSION="1.0.0"
+
+
+script_dir=$(dirname $0)
+
+function GET_JOB_URL() {
+    echo "${API_BASE_URL}/jobs/$1/"
+}
+function GET_PERFDATA_URL() {
+    echo "${API_BASE_URL}/$1/perfdata/"
+}
+
+function die() {
+    echo $1 >&2
+    exit $2 
+}
+
+print_version()
+{
+  echo $VERSION
+}
+
+print_usage ()
+{
+    exe=$(basename $0)
+    echo "Usage: 
+    $exe [-hltvV] [-i FILE] [-j JOB] [-D JOB] [--login] [--logout]
+        -h, --help            Print this usage message.
+        -l, --list            List all jobs
+            --login           Login to perfbrowser cloud service. Save credentials on disk
+            --logout          Logout of perfbrowser cloud service. Remove credentials stored on disk
+        -i, --import FILE     Import CSV data from FILE. If -j (--job) is set then
+                              data will be imported into an existing job
+        -j, --job JOB         Data will be dumped for specified JOB. If this is used
+                              with --import then data is imported instead
+        -t, --test            Run tests
+        -D, --delete JOB      Delete JOB
+        -v, --verbose         Print info messages
+        -V, --version         Print program version and exit
+" 
+}
+
+
+function login() {
+    if [ -s "$TOKEN_PATH" ]; then
+        if ! curl -s -f -u $(cat "$TOKEN_PATH"): "$VERIFY_AUTH_URL" > /dev/null; then
+            rm -f "$TOKEN_PATH"
+            die "Invalid credentials" 2
+        else
+            [ "$1" != "quiet" ] && echo "Login successful (token verified)"
+        fi
+    else
+        if [ "$PB_USER" != "" ]; then
+            username="$PB_USER"
+        else
+            echo -n "Username or email: "
+            read username
+        fi
+        if [ "$PB_PASSWD" != "" ]; then
+            password="$PB_PASSWD"
+        else
+            echo -n "Password: "
+            read -s password
+            echo
+        fi
+        umask 077
+        mkdir -p "$CONFIG_DIR"
+        curl -s -f -u "${username}:${password}" "$USERINFO_URL" | grep -w token| sed 's/"//g'| awk '{print $2}' > "$TOKEN_PATH"
+        if [ ! -s "${TOKEN_PATH}" ]; then
+            die "Invalid credentials" 2
+        else
+            [ "$1" != "quiet" ] && echo "Login successful (token saved)"
+        fi
+    fi    
+}
+
+function jobsList() {
+    login quiet
+    curl -s -f -u $(cat "$TOKEN_PATH"): "$JOBSLIST_URL"
+}
+
+function jobDetail() {
+    login quiet
+    if ! curl -s -f -u $(cat "$TOKEN_PATH"): $(GET_PERFDATA_URL $1); then
+        die "Error retrieving job $1"
+    fi
+}
+
+function logOut() {
+    rm -f "$TOKEN_PATH" && echo "logged out"
+}
+
+function jobDelete() {
+    login quiet
+    if curl -s -f -X DELETE -u $(cat "$TOKEN_PATH"): $(GET_JOB_URL $1); then
+        echo "Job $1 successfully deleted"
+    else
+        die "Could not delete job $1" 4
+    fi
+}
+
+function import() {
+    [ -s $1 ] || die "$1 does not exist or is empty"
+    [ -x "${script_dir}/utils/csv2json" ] || die "Could not file CSV to JSON convertor"
+    csvfile=$(mktemp /tmp/pfb.csv.XXXXXX)
+    cat $1 | col -b > $csvfile
+    nrows=$(wc -l $csvfile | awk '{print $1}')
+    nrecs=$(expr $nrows - 1)
+    # echo "importing $1 with $nrecs records.. "
+    precs=$(${script_dir}/utils/csv2json $csvfile) # | sed 's/\n//g')
+    if [ "$2" == "" ]; then
+        data="{ \"precs\": $precs }"
+    else
+        data="{ \"precs\": ${precs}, \"job_id\": $2  }"
+    fi
+    jsonfile=${csvfile/csv/json}
+    echo -e -n $data > $jsonfile
+    curl --silent --show-error -X POST -H "Content-Type: application/json" -u $(cat "$TOKEN_PATH"): -d @$jsonfile $POST_PERFDATA_URL
+    rm -f $csvfile $jsonfile
+}
+
+verbose=0
+while [ $# -ge 1 ]; do
+    case "$1" in
+        --)
+             # No more options left.
+             shift
+             break
+             ;;
+        -h|--help)
+             print_usage
+             exit 0
+             ;;
+        -i|--import)
+             import_file="$2"
+             [ $verbose -eq 0 ] || echo "command: import file $import_file"
+             shift
+             ;;
+        -j|--job)
+             job="$2"
+             [ $verbose -eq 0 ] || echo "job: $job"
+             shift
+             ;;
+        -l|--list)
+             list=1
+             [ $verbose -eq 0 ] || echo "command: jobs list"
+             ;;
+        --login)
+             login
+             ;;
+        --logout)
+             logOut
+             ;;
+        -D|--delete)
+             delete_job="$2"
+             [ $verbose -eq 0 ] || echo "command: delete job $delete_job"
+             shift
+             ;;
+        -t|--test)
+             exec ${script_dir}/test/run
+             ;;
+        -v|--verbose)
+             verbose=1
+             ;;
+        -V|--version)
+             print_version && exit 0
+             ;;
+        *)
+             echo "Could not recognize option \"$1\""
+             print_usage && exit 1
+             ;;
+      esac
+      shift
+done
+
+[ $verbose -eq 1 ] && echo "api base url: $API_BASE_URL"
+if [ "$list" == "1" ]; then
+    jobsList
+elif [ "$delete_job" != "" ]; then
+    jobDelete $delete_job
+elif [ "$import_file" != "" ]; then
+    import $import_file $job
+elif [ "$job" != "" ]; then
+    jobDetail $job
+fi

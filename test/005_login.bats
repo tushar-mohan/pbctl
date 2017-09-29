@@ -2,5 +2,5 @@
 
 
 @test "can we login?" {
-    pb login --verify
+    pfb --login
 }

@@ -4,21 +4,21 @@
 setup() {
     datafile="${PB_TEST_DIR}/data/sample.papiex.csv"
     [ -f "$datafile" ]
-    run pb import "$datafile"
+    run pfb -i "$datafile"
     [ $status -eq 0 ]
-    job_id=$(echo ${output} | grep JobId | awk '{print $NF}')
+    job_id=$(echo ${output}|grep -w \"id\"|awk '{print $3}'|sed 's/,//')
 }
 
 @test "jobs listing" {
-    out=$(pb rest -l | grep '"id": ')
+    out=$(pfb -l | grep '"id": ')
     [[ "$out" =~ $job_id ]]
 }
 
 @test "job detail" {
-    out=$(pb rest -s $job_id | grep '"jobId": ')
+    out=$(pfb -j $job_id | grep '"jobId": ')
     [[ "$out" =~ $job_id ]]
 }
 
 teardown() {
-    run pb rest -d $job_id
+    run pfb -D $job_id
 }

@@ -5,12 +5,7 @@ RUN apt-get update && \
         curl \
         netcat \
         tzdata \
-        python-pip \
         postgresql-client && \
-        rm -rf /var/lib/apt/lists/* && \
-    pip install --upgrade pip 
+        rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/perfbrowser-cli
-
-COPY ./requirements.txt /opt/perfbrowser-cli/requirements.txt
-RUN pip install -r /opt/perfbrowser-cli/requirements.txt
