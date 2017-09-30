@@ -2,5 +2,5 @@
 
 
 @test "can we login?" {
-    pfb --login
+    pfb login
 }

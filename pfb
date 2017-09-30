@@ -39,19 +39,21 @@ print_usage ()
 {
     exe=$(basename $0)
     echo "Usage: 
-    $exe [-hltvV] [-i FILE] [-j JOB] [-D JOB] [--login] [--logout]
+    $exe [-hv] COMMAND
         -h, --help            Print this usage message.
-        -l, --list            List all jobs
-            --login           Login to perfbrowser cloud service. Save credentials on disk
-            --logout          Logout of perfbrowser cloud service. Remove credentials stored on disk
-        -i, --import FILE     Import CSV data from FILE. If -j (--job) is set then
-                              data will be imported into an existing job
-        -j, --job JOB         Data will be dumped for specified JOB. If this is used
-                              with --import then data is imported instead
-        -t, --test            Run tests
-        -D, --delete JOB      Delete JOB
         -v, --verbose         Print info messages
-        -V, --version         Print program version and exit
+
+     COMMAND is one of the following:
+
+        del JOB               Delete JOB
+        import FILE [JOB]     Import CSV data from FILE. If a JOB is specified after the
+                              file, then the data will be appended into an existing job
+        list                  List all jobs
+        login                 Login to perfbrowser cloud service. Save credentials on disk
+        logout                Logout of perfbrowser cloud service. Remove credentials stored on disk
+        show JOB              Dump JOB details
+        test                  Run tests
+        version               Print program version and exit
 " 
 }
 
@@ -148,38 +150,40 @@ while [ $# -ge 1 ]; do
              print_usage
              exit 0
              ;;
-        -i|--import)
+        import)
              import_file="$2"
+             job="$3"
              [ $verbose -eq 0 ] || echo "command: import file $import_file"
              shift
+             shift
              ;;
-        -j|--job)
-             job="$2"
+        show)
+             show="$2"
              [ $verbose -eq 0 ] || echo "job: $job"
              shift
              ;;
-        -l|--list)
+        list)
              list=1
              [ $verbose -eq 0 ] || echo "command: jobs list"
              ;;
-        --login)
+        login)
              login
              ;;
-        --logout)
+        logout)
              logOut
              ;;
-        -D|--delete)
+        del)
              delete_job="$2"
              [ $verbose -eq 0 ] || echo "command: delete job $delete_job"
              shift
              ;;
-        -t|--test)
+        test)
              exec ${script_dir}/test/run
              ;;
         -v|--verbose)
              verbose=1
              ;;
-        -V|--version)
+        version)
              print_version && exit 0
              ;;
         *)
@@ -197,6 +201,6 @@ elif [ "$delete_job" != "" ]; then
     jobDelete $delete_job
 elif [ "$import_file" != "" ]; then
     import $import_file $job
-elif [ "$job" != "" ]; then
-    jobDetail $job
+elif [ "$show" != "" ]; then
+    jobDetail $show
 fi
