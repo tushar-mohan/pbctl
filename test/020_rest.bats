@@ -6,7 +6,8 @@ setup() {
     [ -f "$datafile" ]
     run pfb -i "$datafile"
     [ $status -eq 0 ]
-    job_id=$(echo ${output}|grep -w \"id\"|awk '{print $3}'|sed 's/,//')
+    [[ $output =~ id...([0-9]+), ]]
+    job_id=${BASH_REMATCH[1]}
 }
 
 @test "jobs listing" {

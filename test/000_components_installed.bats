@@ -6,5 +6,4 @@
   which bash
   which curl
   which wc
-  which col
 }

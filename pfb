@@ -16,6 +16,7 @@ VERSION="1.0.0"
 
 
 script_dir=$(dirname $0)
+verbose=0
 
 function GET_JOB_URL() {
     echo "${API_BASE_URL}/jobs/$1/"
@@ -116,24 +117,26 @@ function jobDelete() {
 function import() {
     [ -s $1 ] || die "$1 does not exist or is empty"
     [ -x "${script_dir}/utils/csv2json" ] || die "Could not file CSV to JSON convertor"
-    csvfile=$(mktemp /tmp/pfb.csv.XXXXXX)
-    cat $1 | col -b > $csvfile
-    nrows=$(wc -l $csvfile | awk '{print $1}')
+    nrows=$(wc -l "$1" | awk '{print $1}')
     nrecs=$(expr $nrows - 1)
-    # echo "importing $1 with $nrecs records.. "
-    precs=$(${script_dir}/utils/csv2json $csvfile) # | sed 's/\n//g')
+    echo "importing $1 with $nrecs records.. "
+    precs=$(${script_dir}/utils/csv2json "$1") # | sed 's/\n//g')
     if [ "$2" == "" ]; then
         data="{ \"precs\": $precs }"
     else
         data="{ \"precs\": ${precs}, \"job_id\": $2  }"
     fi
-    jsonfile=${csvfile/csv/json}
+    jsonfile=$(mktemp /tmp/pfb.json.XXXXXX)
     echo -e -n $data > $jsonfile
-    curl --silent --show-error -X POST -H "Content-Type: application/json" -u $(cat "$TOKEN_PATH"): -d @$jsonfile $POST_PERFDATA_URL
-    rm -f $csvfile $jsonfile
+    if curl -f --silent --show-error -X POST -H "Content-Type: application/json" -u $(cat "$TOKEN_PATH"): -d @$jsonfile $POST_PERFDATA_URL; then
+        echo "import of $1 successful"
+    else
+        die "import of $1 failed"
+    fi
+    rm -f $jsonfile
+    
 }
 
-verbose=0
 while [ $# -ge 1 ]; do
     case "$1" in
         --)
