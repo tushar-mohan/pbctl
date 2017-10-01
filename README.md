@@ -14,9 +14,9 @@ The utility is written entirely in `bash`. Its only dependency is `cURL`.
 As PerfBrowser cloud implements access control, you will need to sign
 up for an account at:
 
-httpsss://perfbrowser.perftools.org
+https://perfbrowser.perftools.org
 
-A [demo account](httpsss://perfbrowser.perftools.org/demo) exists to 
+A [demo account](https://perfbrowser.perftools.org/demo) exists to 
 try out the service without signing up.
 
 Let's get started!
@@ -55,8 +55,8 @@ Let's see a jobs listing:
             ]
           },
           "name": "Gadget",
-          "perfdataUrl": "httpss://perfbrowser.perftools.org/api/1.0/3/perfdata/",
-          "resourceUrl": "httpss://perfbrowser.perftools.org/api/1.0/jobs/3/",
+          "perfdataUrl": "https://perfbrowser.perftools.org/api/1.0/3/perfdata/",
+          "resourceUrl": "https://perfbrowser.perftools.org/api/1.0/jobs/3/",
           "userId": 1
         },
         {
@@ -72,8 +72,8 @@ Let's see a jobs listing:
             ]
           }, 
           "name": "NAMD v1", 
-          "perfdataUrl": "httpss://perfbrowser.perftools.org/api/1.0/1/perfdata/", 
-          "resourceUrl": "httpss://perfbrowser.perftools.org/api/1.0/jobs/1/", 
+          "perfdataUrl": "https://perfbrowser.perftools.org/api/1.0/1/perfdata/", 
+          "resourceUrl": "https://perfbrowser.perftools.org/api/1.0/jobs/1/", 
           "userId": 1
         } 
       ], 
