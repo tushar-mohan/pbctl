@@ -39,6 +39,7 @@ for subsequent operations.
 
 Let's see a jobs listing:
 
+    $ pfb list
     {
       "jobs": [
         {
