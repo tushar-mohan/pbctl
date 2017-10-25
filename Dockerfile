@@ -8,4 +8,5 @@ RUN apt-get update && \
         postgresql-client && \
         rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/perfbrowser-cli
+WORKDIR /opt/perfbrowser/cli
+COPY . /opt/perfbrowser/cli/
