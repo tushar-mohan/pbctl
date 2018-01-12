@@ -128,7 +128,7 @@ function import() {
     else
         data="{ \"precs\": ${precs}, \"job_id\": $2  }"
     fi
-    jsonfile=$(mktemp /tmp/pfb.json.XXXXXX)
+    jsonfile=$(mktemp /tmp/pbctl.json.XXXXXX)
     echo -e -n $data > $jsonfile
     if curl -f --silent --show-error -X POST -H "Content-Type: application/json" -u $(cat "$TOKEN_PATH"): -d @$jsonfile $POST_PERFDATA_URL; then
         echo "import of $1 successful"

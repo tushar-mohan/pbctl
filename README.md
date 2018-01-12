@@ -1,7 +1,7 @@
 PerfBrowser-CLI
 ===============
 
-The `pfb` utility provides a command-line interface to the PerfBrowser
+The `pbctl` utility provides a command-line interface to the PerfBrowser
 cloud service. 
 
 It allows for:
@@ -21,13 +21,13 @@ try out the service without signing up.
 
 Let's get started!
 
-`pfb --help` prints a help message detailing its syntax.
+`pbctl --help` prints a help message detailing its syntax.
 
 The first thing to do once you have a login/password to PerfBrowser
 cloud is to login from the command-line. This automatically saves an 
 encrypted token on your disk under `$HOME/.perfbrowser`.
 
-      $ pfb login
+      $ pbctl login
       Username or email: test123@example.com
       Password: ********
       Login successful (token saved)
@@ -35,11 +35,11 @@ encrypted token on your disk under `$HOME/.perfbrowser`.
 You only need to login once. The saved token will provide secure access
 for subsequent operations.
 
-`pfb` output is in JSON, and can be parsed by a utility like `jq`.
+`pbctl` output is in JSON, and can be parsed by a utility like `jq`.
 
 Let's see a jobs listing:
 
-    $ pfb list
+    $ pbctl list
     {
       "jobs": [
         {
@@ -82,7 +82,7 @@ Let's see a jobs listing:
     
 To query a particular job, you'd do:
 
-    $ pfb show 1
+    $ pbctl show 1
     {
       "jobId": 1, 
       "perfdata": [
@@ -109,7 +109,7 @@ To query a particular job, you'd do:
 
 To upload a CSV file, you can use the `import` argument:
 
-    $ pfb import test/data/sample.papiex.csv 
+    $ pbctl import test/data/sample.papiex.csv 
     importing test/data/sample.papiex.csv with 240 records.. 
     {
       "id": 4, 

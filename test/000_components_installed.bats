@@ -1,5 +1,5 @@
 @test "perfbrowser driver" {
-  pfb -h
+  pbctl -h
 }
 
 @test "dependencies" {
