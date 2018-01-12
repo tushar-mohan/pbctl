@@ -1,8 +1,8 @@
-PerfBrowser-CLI
-===============
+pbctl
+=====
 
 The `pbctl` utility provides a command-line interface to the PerfBrowser
-cloud service. 
+Cloud service. 
 
 It allows for:
 
@@ -11,18 +11,20 @@ It allows for:
 
 The utility is written entirely in `bash`. Its only dependency is `cURL`.
 
-As PerfBrowser cloud implements access control, you will need to sign
+As PerfBrowser Cloud implements access control, you will need to sign
 up for an account at:
 
 https://perfbrowser.perftools.org
 
-A [demo account](https://perfbrowser.perftools.org/demo) exists to 
+A [demo account](https://perfbrowser.perftools.org/wiki/Demo) exists to 
 try out the service without signing up.
 
-Let's get started!
+
+## Getting Started ##
 
 `pbctl --help` prints a help message detailing its syntax.
 
+### Login ###
 The first thing to do once you have a login/password to PerfBrowser
 cloud is to login from the command-line. This automatically saves an 
 encrypted token on your disk under `$HOME/.perfbrowser`.
@@ -37,6 +39,7 @@ for subsequent operations.
 
 `pbctl` output is in JSON, and can be parsed by a utility like `jq`.
 
+### Jobs Listing ###
 Let's see a jobs listing:
 
     $ pbctl list
@@ -79,7 +82,8 @@ Let's see a jobs listing:
       ], 
       "userId": 1
     }
-    
+
+### Job Details ###
 To query a particular job, you'd do:
 
     $ pbctl show 1
@@ -107,6 +111,7 @@ To query a particular job, you'd do:
       ]
     }
 
+### Uploading Data ###
 To upload a CSV file, you can use the `import` argument:
 
     $ pbctl import test/data/sample.papiex.csv 
@@ -122,15 +127,11 @@ To upload a CSV file, you can use the `import` argument:
     import of test/data/sample.papiex.csv successful
 
 
-Bugs
-----
+## Bugs ##
 Your feedback and bug reports are appreciated. Please mail them to:
 
-support@perfbrowser.perftools.org
+pbctl-support@perftools.org
 
 
-License
--------
-Refer to:
-
-https://perfbrowser.perftools.org/license#cli
+## License ##
+`pbctl` is released under [MIT license](LICENSE.md).
