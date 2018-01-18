@@ -16,9 +16,6 @@ up for an account at:
 
 https://perfbrowser.perftools.org
 
-A [demo account](https://perfbrowser.perftools.org/wiki/Demo) exists to 
-try out the service without signing up.
-
 
 ## Getting Started ##
 
