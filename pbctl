@@ -1,9 +1,21 @@
 #!/bin/bash
 
-# Exit codes
-# 2 : Invalid credentials
-# 3 : Error deleting job
-# 4 : Error retrieving job
+# Author: Tushar Mohan <tusharmohan@gmail.com>
+# 
+# usage:
+#  pbctl login
+#  pbctl logout
+#  pbctl import <file.csv>
+#  pbctl list
+#  pbctl show <job-id>
+#  pbctl del <job-id>
+#  pbctl test
+#  pbctl version
+
+# Revision History
+# 
+
+VERSION="1.0.2"
 
 API_BASE_URL=${PB_APIBASE_URL:-"https://perfbrowser.perftools.org/api/1.0"}
 USERINFO_URL="${API_BASE_URL}/userinfo/"
@@ -12,7 +24,6 @@ POST_PERFDATA_URL="${API_BASE_URL}/perfdata/"
 VERIFY_AUTH_URL="${API_BASE_URL}/verify_auth/"
 CONFIG_DIR="${HOME}/.perfbrowser"
 TOKEN_PATH="${CONFIG_DIR}/.authtoken"
-VERSION="1.0.1"
 
 
 script_dir=$(dirname $0)
@@ -46,8 +57,11 @@ print_usage ()
      COMMAND is one of the following:
 
         del JOB               Delete JOB
-        import FILE [JOB]     Import CSV data from FILE. If a JOB is specified after the
-                              file, then the data will be appended into an existing job
+        import [FILE|-] [JOB] Import CSV data from FILE or stdin (-). If a JOB is 
+                              specified, then the data will be appended into an 
+                              existing job, If no FILE is provided, data will be
+                              read from stdin (-). If PBCTL_DUMP_JSON is set,
+                              then pbctl will dump JSON data to stdout and exit.
         list                  List all jobs
         login                 Login to perfbrowser cloud service. Save credentials on disk
         logout                Logout of perfbrowser cloud service. Remove credentials stored on disk
@@ -116,42 +130,46 @@ function jobDelete() {
     fi
 }
 
+
 function import() {
-    [ -s $1 ] || die "$1 does not exist or is empty"
-    nrows=$(wc -l "$1" | awk '{print $1}')
-    nrecs=$(expr $nrows - 1)
-    echo "importing $1 with $nrecs records.. "
-    precs=$(csv2json "$1") # | sed 's/\n//g')
+    precs=$(csv2json "$1")
     if [ "$2" == "" ]; then
         data="{ \"precs\": $precs }"
     else
         data="{ \"precs\": ${precs}, \"job_id\": $2  }"
     fi
+    if [ "$PBCTL_DUMP_JSON" != "" ]; then
+        echo -e -n "$data"
+        exit 0
+    fi
     jsonfile=$(mktemp /tmp/pbctl.json.XXXXXX)
-    echo -e -n $data > $jsonfile
+    echo -e -n "$data" > $jsonfile
     if curl -f --silent --show-error -X POST -H "Content-Type: application/json" -u $(cat "$TOKEN_PATH"): -d @$jsonfile $POST_PERFDATA_URL; then
         echo "import of $1 successful"
     else
         die "import of $1 failed"
     fi
     rm -f $jsonfile
-    
 }
 
+# csv2json input.csv
+# json output sent to stdout
 function csv2json() {
-    # usage: csv2json input.csv
-    # json output sent to stdout
      
-    input=$1
-     
-    [ -z $1 ] && echo "No CSV input file specified" && return
-    [ ! -s $input ] && echo "Could not find $input" && return
-     
-    read header_line < $input
-    header_line=$(echo -n $header_line|sed 's///')
+    [ -z "$1" ] && echo "No CSV input file specified" >&2 && return
+    input="$1"
+    if [ "$input" != "-" ]; then
+        [ ! -s "$input" ] && echo "Could not find $input" >&2 && return
+    fi
+
+    if [ "$input" == "-" ]; then 
+        readarray -t lines
+    else
+        readarray -t lines < "$input"
+    fi
+    header_line="${lines[0]}"
     a=0
     headers=`echo $header_line | awk -F, {'print NF'}`
-    numlines=`cat $input | wc -l`
     while [ $a -lt $headers ]
     do
             head_array[$a]=$(echo $header_line | awk -v x=$(($a + 1)) -F"," '{print $x}')
@@ -159,11 +177,10 @@ function csv2json() {
     done
      
     c=0
+    numlines="${#lines[@]}"
+    echo "input contains $numlines lines (including header)" >&2
     echo "["
-    while [ $c -lt $numlines ]
-    do
-            read dataline
-            # dataline=$(echo -n $dataline|sed 's///')
+    for dataline in "${lines[@]}"; do
             if [ $c -ne 0 ]; then
                     d=0
                     echo "    {"
@@ -190,7 +207,7 @@ function csv2json() {
                     fi
             fi
             c=$(($c+1))
-    done < $input
+    done
     echo "]"
 }
 
@@ -206,7 +223,7 @@ while [ $# -ge 1 ]; do
              exit 0
              ;;
         import)
-             import_file="$2"
+             import_file=${2:-"-"}
              job="$3"
              [ $verbose -eq 0 ] || echo "command: import file $import_file"
              shift

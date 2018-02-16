@@ -131,4 +131,4 @@ pbctl-support@perftools.org
 
 
 ## License ##
-`pbctl` is released under [MIT license](LICENSE.md).
+`pbctl` is released under the [MIT license](LICENSE.md).
