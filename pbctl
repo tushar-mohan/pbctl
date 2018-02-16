@@ -12,10 +12,16 @@
 #  pbctl test
 #  pbctl version
 
-# Revision History
-# 
+# e.g.,
+#  pbctl import test/data/sample.papiex.csv
+#  cat test/data/sample.papiex.csv | pbctl import -
+#  hpcrun2json *.hpcrun-flat.* | pbctl import -
 
-VERSION="1.0.2"
+# Revision History
+#
+# 1.1.0 - Added support for import json data directly 
+
+VERSION="1.1.0"
 
 API_BASE_URL=${PB_APIBASE_URL:-"https://perfbrowser.perftools.org/api/1.0"}
 USERINFO_URL="${API_BASE_URL}/userinfo/"
@@ -57,7 +63,7 @@ print_usage ()
      COMMAND is one of the following:
 
         del JOB               Delete JOB
-        import [FILE|-] [JOB] Import CSV data from FILE or stdin (-). If a JOB is 
+        import [FILE|-] [JOB] Import CSV/JSON data from FILE or stdin (-). If a JOB is 
                               specified, then the data will be appended into an 
                               existing job, If no FILE is provided, data will be
                               read from stdin (-). If PBCTL_DUMP_JSON is set,
@@ -132,7 +138,13 @@ function jobDelete() {
 
 
 function import() {
-    precs=$(csv2json "$1")
+    declare -a inputLines
+    readInput "$1"
+    if [[ "${inputLines[0]}" == *,* ]]; then
+        precs=$(csv2json)
+    else
+        precs=$(IFS=$'\n'; echo "${inputLines[*]}")
+    fi
     if [ "$2" == "" ]; then
         data="{ \"precs\": $precs }"
     else
@@ -152,22 +164,26 @@ function import() {
     rm -f $jsonfile
 }
 
-# csv2json input.csv
-# json output sent to stdout
-function csv2json() {
-     
-    [ -z "$1" ] && echo "No CSV input file specified" >&2 && return
+# this function will read an input file or stdin
+# and populate an array called 'inputLines'
+function readInput() {
+    [ -z "$1" ] && echo "No input specified" >&2 && exit 1
     input="$1"
     if [ "$input" != "-" ]; then
         [ ! -s "$input" ] && echo "Could not find $input" >&2 && return
     fi
-
     if [ "$input" == "-" ]; then 
-        readarray -t lines
+        readarray -t inputLines
     else
-        readarray -t lines < "$input"
+        readarray -t inputLines < "$input"
     fi
-    header_line="${lines[0]}"
+    return
+}
+
+# csv2json assumes an array inputLines is populated with input data
+# json output sent to stdout
+function csv2json() {
+    header_line="${inputLines[0]}"
     a=0
     headers=`echo $header_line | awk -F, {'print NF'}`
     while [ $a -lt $headers ]
@@ -177,10 +193,10 @@ function csv2json() {
     done
      
     c=0
-    numlines="${#lines[@]}"
+    numlines="${#inputLines[@]}"
     echo "input contains $numlines lines (including header)" >&2
     echo "["
-    for dataline in "${lines[@]}"; do
+    for dataline in "${inputLines[@]}"; do
             if [ $c -ne 0 ]; then
                     d=0
                     echo "    {"
