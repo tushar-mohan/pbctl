@@ -18,10 +18,10 @@
 #  hpcrun2json *.hpcrun-flat.* | pbctl import -
 
 # Revision History
-#
+# 1.1.1 - workaround for missing readarray for bash 3.x
 # 1.1.0 - Added support for import json data directly 
 
-VERSION="1.1.0"
+VERSION="1.1.1"
 
 API_BASE_URL=${PB_APIBASE_URL:-"https://perfbrowser.perftools.org/api/1.0"}
 USERINFO_URL="${API_BASE_URL}/userinfo/"
@@ -172,10 +172,16 @@ function readInput() {
     if [ "$input" != "-" ]; then
         [ ! -s "$input" ] && echo "Could not find $input" >&2 && return
     fi
-    if [ "$input" == "-" ]; then 
-        readarray -t inputLines
+    if [ "$input" == "-" ]; then
+        case $BASH_VERSION in
+            3.*) while IFS= read -r; do inputLines+=("$REPLY"); done ;;
+              *) readarray -t inputLines ;;
+        esac
     else
-        readarray -t inputLines < "$input"
+        case $BASH_VERSION in
+            3.*) while IFS= read -r; do inputLines+=("$REPLY"); done < "$input";;
+              *) readarray -t inputLines < "$input" ;;
+        esac
     fi
     return
 }
