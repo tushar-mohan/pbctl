@@ -1,28 +1,34 @@
 #!/bin/bash
-
-# Author: Tushar Mohan <tusharmohan@gmail.com>
+#
 # 
 # usage:
 #  pbctl login
 #  pbctl logout
 #  pbctl import <file.csv>
 #  pbctl list
-#  pbctl show <job-id>
+#  pbctl get <job-id>
 #  pbctl del <job-id>
 #  pbctl test
 #  pbctl version
-
+#
 # e.g.,
 #  pbctl import test/data/sample.papiex.csv
-#  cat test/data/sample.papiex.csv | pbctl import -
-#  hpcrun2json *.hpcrun-flat.* | pbctl import -
-
+#  cat test/data/sample.papiex.csv | pbctl import - "sample job"
+#  hpcrun2json *.hpcrun-flat.* | pbctl import - "test job" "gcc, open-source"
+#
+#
+# Author: Tushar Mohan <tusharmohan@gmail.com>
+#
+#
 # Revision History
-
+# ----------------
+#
+# 1.1.3 - Improved help message; added support to set name and tags for import.
 # 1.1.1 - workaround for missing readarray for bash 3.x
 # 1.1.0 - Added support for import json data directly 
+#
 
-VERSION="1.1.2"
+VERSION="1.1.3"
 
 API_BASE_URL=${PB_APIBASE_URL:-"https://perfbrowser.perftools.org/api/1.0"}
 USERINFO_URL="${API_BASE_URL}/userinfo/"
@@ -56,26 +62,33 @@ print_version()
 print_usage ()
 {
     exe=$(basename $0)
-    echo "Usage: 
-    $exe [-hv] COMMAND
-        -h, --help            Print this usage message.
-        -v, --verbose         Print info messages
+    cat <<-EOT
+	usage:
 
-     COMMAND is one of the following:
+	$exe [-hv] COMMAND [ARGS]
+	   -h, --help            Print this usage message.
+	   -v, --verbose         Print info messages
+	
+	COMMAND is one of the following:
+	
+	   del JOB               Delete JOB
+	   import [FILE|-] [NAME] [TAG] Import CSV/JSON data from FILE or stdin (-).
+	                         If no FILE is provided, or a hyphen (-) is provided, 
+	                         data will be read read from stdin (-). 
+	                         NAME is an optional string that can be used to
+	                         identify the data. If not provided, a random string 
+	                         will be generated.
+	                         TAG is an optional string of comma-separated terms.
+	                         If PBCTL_DUMP_JSON is set, then pbctl will dump 
+	                         JSON data to stdout and exit.
+	   list                  List all jobs
+	   login                 Login to perfbrowser cloud service. Save credentials on disk
+	   logout                Logout of perfbrowser cloud service. Remove stored credentials
+	   get JOB               Dump data associated with JOB in JSON format
+	   test                  Run tests
+	   version               Print program version and exit
 
-        del JOB               Delete JOB
-        import [FILE|-] [JOB] Import CSV/JSON data from FILE or stdin (-). If a JOB is 
-                              specified, then the data will be appended into an 
-                              existing job, If no FILE is provided, data will be
-                              read from stdin (-). If PBCTL_DUMP_JSON is set,
-                              then pbctl will dump JSON data to stdout and exit.
-        list                  List all jobs
-        login                 Login to perfbrowser cloud service. Save credentials on disk
-        logout                Logout of perfbrowser cloud service. Remove credentials stored on disk
-        show JOB              Dump JOB details
-        test                  Run tests
-        version               Print program version and exit
-" 
+EOT
 }
 
 
@@ -147,9 +160,13 @@ function import() {
         precs=$(IFS=$'\n'; echo "${inputLines[*]}")
     fi
     if [ "$2" == "" ]; then
-        data="{ \"precs\": $precs }"
+        data="{ \"precs\": ${precs} }"
     else
-        data="{ \"precs\": ${precs}, \"job_id\": $2  }"
+        if [ "$3" == "" ]; then
+            data="{ \"precs\": $precs, \"name\": \"$2\" }"
+        else
+            data="{ \"precs\": $precs, \"name\": \"$2\", \"tags\": \"$3\" }"
+        fi
     fi
     if [ "$PBCTL_DUMP_JSON" != "" ]; then
         echo -e -n "$data"
@@ -242,19 +259,21 @@ while [ $# -ge 1 ]; do
              shift
              break
              ;;
-        -h|--help)
+        -h|--h|help|--help)
              print_usage
              exit 0
              ;;
         import)
              import_file=${2:-"-"}
-             job="$3"
+             name="$3"
+             tags="$4"
              [ $verbose -eq 0 ] || echo "command: import file $import_file"
              shift
              shift
+             shift
              ;;
-        show)
-             show="$2"
+        get)
+             get="$2"
              [ $verbose -eq 0 ] || echo "job: $job"
              shift
              ;;
@@ -296,7 +315,7 @@ if [ "$list" == "1" ]; then
 elif [ "$delete_job" != "" ]; then
     jobDelete $delete_job
 elif [ "$import_file" != "" ]; then
-    import $import_file $job
-elif [ "$show" != "" ]; then
-    jobDetail $show
+    import "$import_file" "$name" "$tags"
+elif [ "$get" != "" ]; then
+    jobDetail $get
 fi
