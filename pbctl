@@ -22,13 +22,14 @@
 #
 # Revision History
 # ----------------
-#
+# 1.1.4 - Remove invalid credentials and try again on failed login.
+#         When no arguments given to program then exit with a usage message.
 # 1.1.3 - Improved help message; added support to set name and tags for import.
 # 1.1.1 - workaround for missing readarray for bash 3.x
 # 1.1.0 - Added support for import json data directly 
 #
 
-VERSION="1.1.3"
+VERSION="1.1.4"
 
 API_BASE_URL=${PB_APIBASE_URL:-"https://perfbrowser.perftools.org/api/1.0"}
 USERINFO_URL="${API_BASE_URL}/userinfo/"
@@ -96,7 +97,8 @@ function login() {
     if [ -s "$TOKEN_PATH" ]; then
         if ! curl -s -f -u $(cat "$TOKEN_PATH"): "$VERIFY_AUTH_URL" > /dev/null; then
             rm -f "$TOKEN_PATH"
-            die "Invalid credentials" 2
+            echo "Invalid stored credentials (removed). Trying again.." >&2
+            login
         else
             [ "$1" != "quiet" ] && echo "Login successful (token verified)"
         fi
@@ -251,6 +253,11 @@ function csv2json() {
     done
     echo "]"
 }
+
+if [ "$1" == "" ]; then
+    print_usage
+    exit 0
+fi
 
 while [ $# -ge 1 ]; do
     case "$1" in
