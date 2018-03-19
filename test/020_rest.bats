@@ -16,7 +16,7 @@ setup() {
 }
 
 @test "job detail" {
-    out=$(pbctl show $job_id | grep '"jobId": ')
+    out=$(pbctl get $job_id | grep '"jobId": ')
     [[ "$out" =~ $job_id ]]
 }
 
